@@ -37,6 +37,19 @@ curl -fsSL https://jcode.sh/install | bash
 - "Gratis" = el harness open source. Los tokens, GPU cloud y planes de Cursor/Claude/Codex son aparte.
 - No garantizamos resultados de negocio ni que reemplace tu stack actual.
 
+## JCode vs OpenCode: ¿cuál elegir?
+Estas cifras las publica el propio autor de JCode en https://jcode.sh/ (jcode v0.92.14). Son pruebas suyas, no un benchmark independiente.
+En RAM por sesión adicional, jcode usa unos 10.4 MB y OpenCode unos 318.4 MB: OpenCode consume cerca de 30 veces más.
+El tiempo hasta que el texto aparece en pantalla (10 arranques cada uno) es 48.7 ms en jcode y 1047.9 ms en OpenCode, unas 21 veces más lento.
+El prompt de núcleo pesa 671 tokens en jcode y 1,766 en OpenCode.
+JCode está escrito en Rust, es open source y tiene licencia MIT: https://github.com/1jehuang/jcode.
+Las midió quien crea JCode, así que pruébalos tú en tu propia máquina.
+Si quieres correr muchos agentes en paralelo con hardware modesto, la ligereza de JCode es una ventaja. Si ya usas OpenCode y te funciona, no hay un motivo urgente para cambiar.
+Cómo compararlos tú mismo:
+1. Instala los dos.
+2. Abre el mismo repo con el mismo modelo.
+3. Compara la RAM (por ejemplo con htop o el Administrador de tareas) y el tiempo de respuesta a la misma tarea.
+
 ## Si solo quieres el link
 Repo: https://github.com/1jehuang/jcode · Docs/install: https://jcode.sh
 

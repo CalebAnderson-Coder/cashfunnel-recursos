@@ -7,7 +7,7 @@ En el video escribo un solo comando y Claude Code arma una escena 3D animada: un
 **Cómo está hecho el video, sin trucos escondidos:**
 - Las tres escenas son páginas HTML con [three.js](https://threejs.org) que **escribió Claude Code** con los comandos de abajo, en la PC de Brian, el 14-nov-2026. Las grabamos cuadro a cuadro en un navegador sin ventana.
 - La pantalla de chat del teléfono del video es una **recreación del flujo** para que se vea en vertical; no es una captura de la app de Claude. En la vida real escribes el comando en Claude Code (terminal, app de escritorio o extensión del editor).
-- En el agujero negro hicimos **un arreglo de una línea** a lo que generó Claude (la esfera negra no se dibujaba). Ese arreglo ya va escrito dentro del comando `/a-fondo`, así que a ti te debería salir bien a la primera.
+- En el agujero negro hicimos **un arreglo de una línea** a lo que generó Claude (la esfera negra no se dibujaba). Después subimos las etiquetas a 34/30 px para que se lean bien en el celular. Ambos cambios ya van escritos dentro del comando `/a-fondo`, así que a ti te debería salir bien a la primera.
 - El dato de la Luna es real: la gravedad en la Luna es aproximadamente **1/6** de la de la Tierra (NASA: [datos de la Luna](https://science.nasa.gov/moon/facts/), «one-sixth»; [ficha NSSDC](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html): 1,62 m/s² frente a 9,8 m/s², relación 0,165). Y el sistema solar tiene **8 planetas** ([NASA, planetas](https://science.nasa.gov/solar-system/planets/)).
 
 ## Qué necesitas

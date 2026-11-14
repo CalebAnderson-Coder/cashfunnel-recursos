@@ -29,11 +29,11 @@
     font:italic 500 40px/48px 'Cormorant Garamond',serif;color:#b9b9b9}
 
   /* Callouts */
-  .card{position:absolute;left:616px;width:390px;height:100px;box-sizing:border-box;padding:0 16px 0 18px;
+  .card{position:absolute;left:600px;width:420px;height:108px;box-sizing:border-box;padding:0 16px 0 18px;
     background:#fff;border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.55),0 3px 8px rgba(0,0,0,.35);
     display:flex;flex-direction:column;justify-content:center;white-space:nowrap;opacity:0}
-  .ct{font:700 30px/36px 'Inter',sans-serif;color:#111;letter-spacing:-0.3px}
-  .cs{font:400 25px/32px 'JetBrains Mono',monospace;color:#444;letter-spacing:-0.4px}
+  .ct{font:700 34px/40px 'Inter',sans-serif;color:#111;letter-spacing:-0.3px}
+  .cs{font:400 30px/36px 'JetBrains Mono',monospace;color:#444;letter-spacing:-0.4px}
   .dot{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#FF5A36;
     box-shadow:0 0 10px 3px rgba(255,90,54,.85),0 0 26px 8px rgba(255,90,54,.35);opacity:0}
   #lines line{stroke:#d9d9d9;stroke-width:2;stroke-linecap:round}
@@ -56,7 +56,7 @@
   </svg>
   <div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div>
 
-  <div class="card" id="c0" style="top:1170px"><div class="ct">Disco de acreción</div><div class="cs">gas caliente en espiral</div></div>
+  <div class="card" id="c0" style="top:1170px"><div class="ct">Disco de acreción</div><div class="cs">gas que gira y cae</div></div>
   <div class="card" id="c1" style="top:810px"><div class="ct">Horizonte de sucesos</div><div class="cs">punto sin retorno</div></div>
   <div class="card" id="c2" style="top:985px"><div class="ct">Singularidad</div><div class="cs">el centro aplastado</div></div>
 
@@ -212,7 +212,7 @@ const CALL_T=[0.75,1.00,1.25];
 const cards=[0,1,2].map(i=>document.getElementById('c'+i));
 const dots=[0,1,2].map(i=>document.getElementById('d'+i));
 const lines=[0,1,2].map(i=>document.getElementById('l'+i));
-const CARD_TOP=[1170,810,985], CARD_LEFT=616;
+const CARD_TOP=[1170,810,985], CARD_LEFT=600;
 
 /* ---------- headline ---------- */
 const TEXT='Ni la luz escapa.', KW0=6, KW1=9; // "luz" = índices 6..8

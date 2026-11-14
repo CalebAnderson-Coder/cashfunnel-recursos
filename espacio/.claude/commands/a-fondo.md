@@ -13,10 +13,10 @@ Escena: un agujero negro estilo «Interstellar».
 - Lente gravitacional falsa: un anillo de fotones grueso (≈70px) color crema cálido #ffdcae (no blanco puro, opacidad ≈0.85) de ≈330px de radio alrededor del centro de la esfera, un poco desplazado hacia arriba, con glow.
 - Animación: el disco rota, el anillo pulsa un poco, la cámara hace un push-in suave del 6 %.
 - Headline (tipeo de 0.30 a 0.70 s): `Ni la luz escapa.` con `luz` en la caja azul; las demás palabras se quedan MUY atenuadas (color #1f1f1f) — solo la palabra clave destaca.
-- Tres callouts a la derecha (tarjetas blancas radio 10px, sombra; título Inter 700 30px #111, subtítulo JetBrains Mono 25px #444), cada una con una línea guía fina gris claro hacia la izquierda que termina en un punto naranja #FF5A36 con glow sobre la parte señalada:
-  1. t=0.75: `Disco de acreción` / `gas caliente en espiral` (tarjeta en x≈620–1000, y≈1170–1270), punto sobre el disco a la derecha.
-  2. t=1.00: `Horizonte de sucesos` / `punto sin retorno` (y≈810–910), punto sobre el borde superior izquierdo de la esfera.
-  3. t=1.25: `Singularidad` / `el centro aplastado` (y≈985–1085), punto en el centro de la esfera.
+- Tres callouts a la derecha (tarjetas blancas radio 10px, sombra; tarjetas de 420×108px con x 600–1020; título Inter 700 34px #111, subtítulo JetBrains Mono 30px #444; el texto no debe tocar el borde de la tarjeta), cada una con una línea guía fina gris claro hacia la izquierda que termina en un punto naranja #FF5A36 con glow sobre la parte señalada:
+  1. t=0.75: `Disco de acreción` / `gas que gira y cae` (tarjeta en x≈600–1020, y≈1170–1278), punto sobre el disco a la derecha.
+  2. t=1.00: `Horizonte de sucesos` / `punto sin retorno` (y≈810–918), punto sobre el borde superior izquierdo de la esfera.
+  3. t=1.25: `Singularidad` / `el centro aplastado` (y≈985–1093), punto en el centro de la esfera.
   Cada callout entra con fade + deslizamiento de 20px desde la derecha en 200 ms.
 - Etiqueta inferior: `agujero negro a fondo` / `con Claude Code`.
 ## Reglas técnicas comunes (todas las escenas)

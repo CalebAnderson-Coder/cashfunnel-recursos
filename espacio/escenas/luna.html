@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>¿Y si saltaras en la Luna?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@1,500&display=block" rel="stylesheet">
+<style>
+  html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#020202}
+  #c{position:absolute;left:0;top:0;width:1080px;height:1920px;display:block}
+  #headline{position:absolute;left:0;top:236px;width:1080px;padding-top:14px;text-align:center;
+    font-family:'Inter',sans-serif;font-weight:700;font-size:64px;line-height:69px;letter-spacing:-0.5px;
+    color:#fff;white-space:pre;pointer-events:none}
+  #headline .ch{visibility:hidden}
+  #headline .box{display:inline-block;vertical-align:top;height:69px;line-height:69px;padding:0 10px;
+    border-radius:8px;background:#2B5BE6;color:#fff;transform-origin:50% 50%;visibility:hidden}
+  #band{position:absolute;left:0;width:1080px;top:1395px;height:190px;pointer-events:none;
+    background:linear-gradient(to bottom,rgba(0,0,0,0) 0px,rgba(0,0,0,.55) 25px,rgba(0,0,0,.55) 165px,rgba(0,0,0,0) 190px)}
+  #lab1{position:absolute;left:0;width:1080px;top:1442px;text-align:center;font-family:'Inter',sans-serif;
+    font-weight:700;font-size:40px;line-height:48px;color:#fff;pointer-events:none}
+  #lab2{position:absolute;left:0;width:1080px;top:1488px;text-align:center;font-family:'Cormorant Garamond',serif;
+    font-style:italic;font-weight:500;font-size:40px;line-height:48px;color:#b9b9b9;pointer-events:none}
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<div id="headline"></div>
+<div id="band"></div>
+<div id="lab1">salto en la Luna</div>
+<div id="lab2">con Claude Code</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const DURATION = 2.8;
+window.DURATION = DURATION;
+
+// ---------- PRNG determinista ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const rand = mulberry32(20261114);
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const smooth=(a,b,x)=>{const u=clamp((x-a)/(b-a),0,1);return u*u*(3-2*u);};
+const easeOutBack=x=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2);};
+
+// value noise 2D (seeded, periodic in x)
+function makeNoise(seed){
+  const r=mulberry32(seed); const N=256; const p=new Float32Array(N*N);
+  for(let i=0;i<N*N;i++)p[i]=r();
+  const g=(x,y)=>p[((y%N+N)%N)*N+((x%N+N)%N)];
+  return function(x,y,period){
+    const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
+    const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+    const P=period||N;
+    const x0=((xi%P)+P)%P,x1=(((xi+1)%P)+P)%P;
+    const a=g(x0,yi),b=g(x1,yi),c=g(x0,yi+1),d=g(x1,yi+1);
+    return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;
+  };
+}
+const noise=makeNoise(7);
+function fbm(x,y,oct,period){let s=0,a=0.5,f=1,n=0;for(let i=0;i<oct;i++){s+=a*noise(x*f,y*f,period?period*f:0);n+=a;a*=0.5;f*=2;}return s/n;}
+
+// ---------- Renderer ----------
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);
+renderer.setSize(1080,1920,false);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.05;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.autoClear=false;
+renderer.setClearColor(0x020202,1);
+
+const pmrem=new THREE.PMREMGenerator(renderer);
+const envTex=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+
+// ---------- Fondo (ortográfico en píxeles): estrellas + Tierra ----------
+const bgScene=new THREE.Scene();
+const orthoCam=new THREE.OrthographicCamera(-540,540,960,-960,-2000,2000);
+orthoCam.position.z=1000;
+
+// estrellas
+const STARS=420;
+{
+  const pos=new Float32Array(STARS*3),size=new Float32Array(STARS),ph=new Float32Array(STARS),tw=new Float32Array(STARS),br=new Float32Array(STARS);
+  for(let i=0;i<STARS;i++){
+    let px=rand()*1080, py=rand()*1320;
+    if(px<440&&py<190)py+=190; // esquina del chip libre
+    pos[i*3]=px-540; pos[i*3+1]=960-py; pos[i*3+2]=-500;
+    const big=rand();
+    size[i]=big>0.94?2.6:(big>0.7?1.9:1.3);
+    ph[i]=rand()*Math.PI*2;
+    tw[i]=rand()<0.28?(2.5+rand()*4):0;
+    br[i]=0.35+rand()*0.65;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('aSize',new THREE.BufferAttribute(size,1));
+  g.setAttribute('aPh',new THREE.BufferAttribute(ph,1));
+  g.setAttribute('aTw',new THREE.BufferAttribute(tw,1));
+  g.setAttribute('aBr',new THREE.BufferAttribute(br,1));
+  const m=new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0}},
+    transparent:true,depthWrite:false,toneMapped:false,
+    vertexShader:`attribute float aSize;attribute float aPh;attribute float aTw;attribute float aBr;uniform float uTime;varying float vA;
+      void main(){float tw=aTw>0.0?(0.55+0.45*sin(uTime*aTw+aPh)):1.0;vA=aBr*tw;
+      gl_PointSize=aSize*(aTw>0.0?(0.85+0.3*tw):1.0)+1.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+    fragmentShader:`varying float vA;void main(){vec2 d=gl_PointCoord-0.5;float r=length(d);float a=smoothstep(0.5,0.0,r);gl_FragColor=vec4(vec3(0.92,0.94,1.0),a*vA);}`
+  });
+  var starMat=m;
+  bgScene.add(new THREE.Points(g,m));
+}
+
+// Tierra caricatura
+function earthTextures(){
+  const W=512,H=256;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const img=x.createImageData(W,H);
+  const cc=document.createElement('canvas');cc.width=W;cc.height=H;const xc=cc.getContext('2d');
+  const ci=xc.createImageData(W,H);
+  for(let j=0;j<H;j++){
+    const lat=(j/H-0.5)*Math.PI;
+    for(let i=0;i<W;i++){
+      const u=i/W*8, v=j/H*4;
+      let n=fbm(u,v,4,8);
+      n+= -0.10*Math.pow(Math.abs(Math.sin(lat)),3);
+      const k=(j*W+i)*4;
+      let r,g,b;
+      if(n>0.53){ // tierra
+        const e=smooth(0.53,0.6,n);
+        r=70+20*(1-e); g=178+20*(1-e); b=88;
+        if(n<0.545){r=60;g=150;b=78;}
+      } else {
+        const d=smooth(0.3,0.53,n);
+        r=36+20*d; g=110+40*d; b=214+20*d;
+      }
+      if(Math.abs(lat)>1.25){r=236;g=244;b=250;}
+      img.data[k]=r;img.data[k+1]=g;img.data[k+2]=b;img.data[k+3]=255;
+      // nubes
+      const cn=fbm(u*1.625+31,v*2.2+11,4,13);
+      let ca=smooth(0.56,0.66,cn);
+      ci.data[k]=255;ci.data[k+1]=255;ci.data[k+2]=255;ci.data[k+3]=Math.round(ca*235);
+    }
+  }
+  x.putImageData(img,0,0); xc.putImageData(ci,0,0);
+  const t1=new THREE.CanvasTexture(c);t1.colorSpace=THREE.SRGBColorSpace;t1.anisotropy=4;
+  const t2=new THREE.CanvasTexture(cc);t2.colorSpace=THREE.SRGBColorSpace;
+  return [t1,t2];
+}
+const [earthMap,cloudMap]=earthTextures();
+const earth=new THREE.Group();
+earth.position.set(885-540,960-545,0);
+earth.rotation.z=0.38;
+const ER=120;
+const earthBody=new THREE.Mesh(new THREE.SphereGeometry(ER,64,48),new THREE.MeshLambertMaterial({map:earthMap}));
+const earthClouds=new THREE.Mesh(new THREE.SphereGeometry(ER*1.02,64,48),new THREE.MeshLambertMaterial({map:cloudMap,transparent:true,depthWrite:false}));
+const earthOutline=new THREE.Mesh(new THREE.SphereGeometry(ER*1.045,64,48),new THREE.MeshBasicMaterial({color:0x0b1026,side:THREE.BackSide}));
+earth.add(earthOutline,earthBody,earthClouds);
+bgScene.add(earth);
+bgScene.add(new THREE.AmbientLight(0xffffff,0.95));
+const sunBg=new THREE.DirectionalLight(0xfff4e6,2.4);sunBg.position.set(-1,0.55,0.8);bgScene.add(sunBg);
+// halo atmosférico suave
+{
+  const hc=document.createElement('canvas');hc.width=hc.height=256;const hx=hc.getContext('2d');
+  const gr=hx.createRadialGradient(128,128,92,128,128,128);
+  gr.addColorStop(0,'rgba(120,170,255,0.30)');gr.addColorStop(1,'rgba(120,170,255,0)');
+  hx.fillStyle=gr;hx.fillRect(0,0,256,256);
+  const ht=new THREE.CanvasTexture(hc);
+  const halo=new THREE.Mesh(new THREE.PlaneGeometry(ER*2*1.39,ER*2*1.39),new THREE.MeshBasicMaterial({map:ht,transparent:true,depthWrite:false,toneMapped:false}));
+  halo.position.set(885-540,960-545,-300);
+  bgScene.add(halo);
+}
+
+// ---------- Escena principal ----------
+const L0=35.83;           // distancia: 1 unidad ≈ 100 px a la distancia del astronauta
+const PITCH=Math.atan((1295-960)/960*Math.tan(THREE.MathUtils.degToRad(15)));
+const cam=new THREE.PerspectiveCamera(30,1080/1920,0.1,200);
+cam.rotation.x=PITCH;
+
+const groundScene=new THREE.Scene();
+const astroScene=new THREE.Scene();
+function addLights(s){
+  const key=new THREE.DirectionalLight(0xfff3e2,3.4);key.position.set(-12,3.2,4.5);s.add(key);
+  const hemi=new THREE.HemisphereLight(0x8a9bc4,0x5c5c62,0.55);s.add(hemi);
+  const rim=new THREE.DirectionalLight(0xb9d0ff,1.4);rim.position.set(7,5,-6);s.add(rim);
+  const fill=new THREE.DirectionalLight(0xffffff,0.55);fill.position.set(2,2,12);s.add(fill);
+}
+addLights(groundScene);addLights(astroScene);
+
+// suelo lunar: esfera grande (R) parametrizada en un parche
+const R=55;
+const craters=[];
+{
+  const want=26;let tries=0;
+  while(craters.length<want&&tries<2000){
+    tries++;
+    const z=0.6+Math.pow(rand(),0.8)*16;
+    const halfW=(L0-z)*0.151+1.5;
+    const x=(rand()*2-1)*halfW;
+    if(Math.abs(x)<1.8&&z<2.2)continue;
+    const r=0.35+rand()*rand()*1.9;
+    craters.push({x,z,r,d:r*(0.10+rand()*0.08)});
+  }
+}
+function groundH(x,z){
+  let h=-(x*x+z*z)/(2*R);
+  h+=(fbm(x*0.35+50,z*0.35+20,3)-0.5)*0.35;
+  for(const c of craters){
+    const dx=x-c.x,dz=z-c.z;const d=Math.sqrt(dx*dx+dz*dz)/c.r;
+    if(d<1.6){
+      if(d<1)h-=c.d*(1-d*d);
+      h+=c.d*0.45*Math.exp(-Math.pow((d-1)/0.22,2));
+    }
+  }
+  // zona plana bajo el astronauta
+  const fz=Math.exp(-(x*x+z*z)/2.2);
+  return h*(1-fz)+(-(x*x+z*z)/(2*R))*fz;
+}
+{
+  const NX=300,NZ=320,X0=-15,X1=15,Z0=-6,Z1=21;
+  const g=new THREE.PlaneGeometry(1,1,NX,NZ);
+  const pos=g.attributes.position;const col=new Float32Array(pos.count*3);
+  const cNear=new THREE.Color('#8d8d92'),cFar=new THREE.Color('#c9c9cc'),tmp=new THREE.Color();
+  for(let i=0;i<pos.count;i++){
+    const u=pos.getX(i)+0.5,v=pos.getY(i)+0.5;
+    const x=X0+(X1-X0)*u,z=Z0+(Z1-Z0)*(1-v);
+    pos.setXYZ(i,x,groundH(x,z),z);
+    const k=smooth(0,15,z);
+    tmp.copy(cFar).lerp(cNear,k);
+    const sp=0.94+0.12*(fbm(x*3.1,z*3.1,2)-0.5)+0.05*(noise(x*23,z*23)-0.5);
+    col[i*3]=tmp.r*sp;col[i*3+1]=tmp.g*sp;col[i*3+2]=tmp.b*sp;
+  }
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  g.computeVertexNormals();
+  const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0});
+  groundScene.add(new THREE.Mesh(g,m));
+}
+
+// sombra de contacto (elipse suave a la altura de las botas)
+let shadow;
+{
+  const sc=document.createElement('canvas');sc.width=sc.height=256;const sx=sc.getContext('2d');
+  const gr=sx.createRadialGradient(128,128,0,128,128,128);
+  gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(0.45,'rgba(0,0,0,0.55)');gr.addColorStop(1,'rgba(0,0,0,0)');
+  sx.fillStyle=gr;sx.fillRect(0,0,256,256);
+  const st=new THREE.CanvasTexture(sc);
+  shadow=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:st,transparent:true,depthTest:false,depthWrite:false,opacity:0.6}));
+  shadow.position.set(0,-0.04,0.3);
+  groundScene.add(shadow);
+}
+
+// ---------- Astronauta ----------
+const suit=new THREE.MeshStandardMaterial({color:0xf3f3f0,roughness:0.82,metalness:0,envMap:envTex,envMapIntensity:0.35});
+const suitGray=new THREE.MeshStandardMaterial({color:0xb8bcc4,roughness:0.6,metalness:0.1,envMap:envTex,envMapIntensity:0.5});
+const glove=new THREE.MeshStandardMaterial({color:0xe6e6e2,roughness:0.75,envMap:envTex,envMapIntensity:0.35});
+const visorMat=new THREE.MeshPhysicalMaterial({color:0xf0b44a,metalness:1,roughness:0.14,clearcoat:1,clearcoatRoughness:0.08,envMap:envTex,envMapIntensity:1.5});
+
+const astro=new THREE.Group();astroScene.add(astro);
+const body=new THREE.Group();astro.add(body);   // se mueve con el agachado
+
+// torso
+const torsoG=new THREE.Group();torsoG.position.y=1.6;body.add(torsoG);
+const torso=new THREE.Mesh(new THREE.CapsuleGeometry(0.92,0.85,12,32),suit);
+torso.scale.set(1,1,0.8);torso.position.y=1.12;torsoG.add(torso);
+const belt=new THREE.Mesh(new THREE.CylinderGeometry(0.95,0.95,0.2,40),suitGray);
+belt.scale.set(1,1,0.82);belt.position.y=0.42;torsoG.add(belt);
+const panel=new THREE.Mesh(new RoundedBoxGeometry(0.9,0.56,0.18,4,0.07),new THREE.MeshStandardMaterial({color:0xd5d8de,roughness:0.5,envMap:envTex,envMapIntensity:0.5}));
+panel.position.set(0,1.32,0.70);panel.rotation.x=-0.06;torsoG.add(panel);
+const lightCols=[0xff8f8f,0x8fb6ff,0x93efb4];
+lightCols.forEach((c,i)=>{
+  const l=new THREE.Mesh(new THREE.SphereGeometry(0.075,20,14),new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:0.9,roughness:0.3}));
+  l.position.set(-0.24+i*0.24,1.36,0.80);torsoG.add(l);
+});
+const slot=new THREE.Mesh(new RoundedBoxGeometry(0.5,0.08,0.06,2,0.03),suitGray);
+slot.position.set(0,1.18,0.80);torsoG.add(slot);
+const pack=new THREE.Mesh(new RoundedBoxGeometry(1.55,1.75,0.75,5,0.22),suit);
+pack.position.set(0,1.3,-0.82);torsoG.add(pack);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(0.72,0.13,16,48),suitGray);
+ring.rotation.x=Math.PI/2;ring.position.y=2.32;torsoG.add(ring);
+
+// casco
+const head=new THREE.Group();head.position.y=2.95;torsoG.add(head);
+const helmet=new THREE.Mesh(new THREE.SphereGeometry(1.05,48,36),suit);head.add(helmet);
+const visor=new THREE.Mesh(new THREE.SphereGeometry(1.07,48,32,Math.PI/2-0.98,1.96,0.78,1.22),visorMat);
+head.add(visor);
+// brillo especular sobre el visor
+{
+  const dir=new THREE.Vector3(-0.42,0.38,0.82).normalize();
+  const hl=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.85,toneMapped:false}));
+  hl.position.copy(dir.clone().multiplyScalar(1.075));
+  hl.lookAt(dir.clone().multiplyScalar(3));
+  hl.rotateZ(-0.7);
+  hl.scale.set(0.2,0.085,0.015);
+  head.add(hl);
+  const hl2=hl.clone();hl2.material=hl.material.clone();hl2.material.opacity=0.55;
+  const d2=new THREE.Vector3(-0.2,0.5,0.84).normalize();
+  hl2.position.copy(d2.clone().multiplyScalar(1.075));hl2.rotation.set(0,0,0);hl2.lookAt(d2.clone().multiplyScalar(3));hl2.rotateZ(-0.35);
+  hl2.scale.set(0.07,0.04,0.015);
+  head.add(hl2);
+}
+
+// brazos
+function makeArm(side){
+  const sh=new THREE.Group();sh.position.set(side*1.0,2.1,0);torsoG.add(sh);
+  const shoulder=new THREE.Mesh(new THREE.SphereGeometry(0.34,24,18),suit);sh.add(shoulder);
+  const up=new THREE.Mesh(new THREE.CapsuleGeometry(0.27,0.45,8,20),suit);up.position.y=-0.48;sh.add(up);
+  const el=new THREE.Group();el.position.y=-0.86;sh.add(el);
+  const fo=new THREE.Mesh(new THREE.CapsuleGeometry(0.25,0.4,8,20),suit);fo.position.y=-0.4;el.add(fo);
+  const cuff=new THREE.Mesh(new THREE.TorusGeometry(0.23,0.07,10,28),suitGray);cuff.rotation.x=Math.PI/2;cuff.position.y=-0.74;el.add(cuff);
+  const gl=new THREE.Mesh(new THREE.SphereGeometry(0.3,24,18),glove);gl.scale.set(0.95,1.1,0.85);gl.position.y=-0.95;el.add(gl);
+  const th=new THREE.Mesh(new THREE.CapsuleGeometry(0.09,0.14,6,12),glove);th.position.set(-side*0.22,-0.86,0.1);th.rotation.z=side*0.6;el.add(th);
+  return {sh,el};
+}
+const armL=makeArm(-1),armR=makeArm(1);
+
+// piernas
+function makeLeg(side){
+  const hip=new THREE.Group();hip.position.set(side*0.43,2.0,0);body.add(hip);
+  const th=new THREE.Mesh(new THREE.CapsuleGeometry(0.34,0.55,8,20),suit);th.position.y=-0.55;hip.add(th);
+  const kn=new THREE.Group();kn.position.y=-0.95;hip.add(kn);
+  const kneePad=new THREE.Mesh(new THREE.SphereGeometry(0.2,16,12),suitGray);kneePad.scale.set(1,0.7,0.6);kneePad.position.set(0,0,0.26);kn.add(kneePad);
+  const sn=new THREE.Mesh(new THREE.CapsuleGeometry(0.32,0.42,8,20),suit);sn.position.y=-0.42;kn.add(sn);
+  const ank=new THREE.Group();ank.position.y=-0.8;kn.add(ank);
+  const boot=new THREE.Mesh(new THREE.SphereGeometry(1,28,20),suitGray);boot.scale.set(0.38,0.27,0.5);boot.position.set(0,0.0,0.08);ank.add(boot);
+  const bootTop=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.37,0.22,28),suitGray);bootTop.position.set(0,0.14,0);ank.add(bootTop);
+  return {hip,kn,ank};
+}
+const legL=makeLeg(-1),legR=makeLeg(1);
+
+// ---------- Polvo lunar ----------
+const DUST=170,T0=1.05,GRAV=4.3;
+const dP0=new Float32Array(DUST*3),dV=new Float32Array(DUST*3),dS=new Float32Array(DUST),dL=new Float32Array(DUST),dD=new Float32Array(DUST);
+for(let i=0;i<DUST;i++){
+  const side=rand()<0.5?-1:1;
+  const ang=rand()*Math.PI*2;
+  dP0[i*3]=side*(0.25+rand()*0.4)+Math.cos(ang)*0.15;dP0[i*3+1]=0.03;dP0[i*3+2]=(rand()-0.5)*0.7;
+  const sp=0.6+rand()*2.2;
+  const dirx=Math.cos(ang)*0.6+side*0.8;
+  const n=Math.hypot(dirx,Math.sin(ang));
+  dV[i*3]=dirx/n*sp;dV[i*3+1]=0.4+rand()*1.9;dV[i*3+2]=Math.sin(ang)/n*sp*0.8;
+  dS[i]=0.035+rand()*0.07;dL[i]=0.9+rand()*1.0;dD[i]=rand()*0.08;
+}
+const dustGeo=new THREE.BufferGeometry();
+const dustPos=new Float32Array(DUST*3),dustA=new Float32Array(DUST);
+dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+dustGeo.setAttribute('aA',new THREE.BufferAttribute(dustA,1));
+dustGeo.setAttribute('aS',new THREE.BufferAttribute(dS,1));
+const dustMat=new THREE.ShaderMaterial({
+  transparent:true,depthWrite:false,
+  uniforms:{uScale:{value:960/Math.tan(THREE.MathUtils.degToRad(15))}},
+  vertexShader:`attribute float aA;attribute float aS;uniform float uScale;varying float vA;
+    void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vA=aA;gl_PointSize=max(1.5,aS*uScale/-mv.z);gl_Position=projectionMatrix*mv;}`,
+  fragmentShader:`varying float vA;void main(){float r=length(gl_PointCoord-0.5);float a=smoothstep(0.5,0.1,r)*vA;if(a<0.003)discard;gl_FragColor=vec4(0.86,0.86,0.88,a);}`
+});
+const dust=new THREE.Points(dustGeo,dustMat);dust.frustumCulled=false;astroScene.add(dust);
+
+// ---------- Headline ----------
+const HL_PRE='Gravedad: ',HL_KEY='1/6',HL_POST=' de la terrestre.';
+const hl=document.getElementById('headline');
+const chars=[];let boxEl,keyStart;
+function addChars(parent,s){for(const c of s){const sp=document.createElement('span');sp.className='ch';sp.textContent=c;parent.appendChild(sp);chars.push(sp);}}
+addChars(hl,HL_PRE);
+boxEl=document.createElement('span');boxEl.className='box';hl.appendChild(boxEl);
+keyStart=chars.length;addChars(boxEl,HL_KEY);
+addChars(hl,HL_POST);
+const TYPE0=0.40,TYPE1=1.00,NCH=chars.length;
+const charTime=i=>TYPE0+(i/NCH)*(TYPE1-TYPE0);
+
+// ---------- Animación ----------
+const H=2.8,TA=2.2,TF=TA-T0;
+function jumpY(t){if(t<T0)return 0;const u=(t-TA)/TF;return H*(1-u*u);}
+
+window.setTime=function(t){
+  t=clamp(t,0,DURATION);
+  // cámara: dolly-in 5%
+  const p=t/DURATION;
+  cam.position.set(0,0.04,L0/(1+0.05*p));
+  cam.updateMatrixWorld();
+
+  // agachado y recogido
+  const crouch=t<T0?smooth(0.85,1.05,t):1-smooth(T0,1.2,t);
+  const tuck=smooth(1.3,1.95,t);
+  const aC=0.6*crouch, aT=0.55*tuck;
+  const a=aC+aT;
+  [legL,legR].forEach((lg,i)=>{
+    const s=i?1:-1;
+    lg.hip.rotation.x=-a; lg.kn.rotation.x=2*a; lg.ank.rotation.x=-a;
+    lg.hip.rotation.z=s*0.04*tuck;
+  });
+  const drop=1.75*(1-Math.cos(aC));
+  const breath=Math.sin(t*Math.PI*2/1.4);
+  body.position.y=-drop;
+  torsoG.scale.y=1+0.012*breath*(1-smooth(0.8,1.0,t));
+  torsoG.rotation.x=0.12*crouch-0.03*tuck;
+  head.position.y=2.95+0.015*breath*(1-smooth(0.8,1.0,t));
+  head.rotation.x=-0.05*crouch+0.06*smooth(1.1,1.6,t);
+  astro.position.y=jumpY(t); // en vuelo el torso sigue la parábola y los pies suben al recoger
+
+  // brazos
+  const up=smooth(1.0,1.4,t);
+  const wave=t>1.3?Math.sin((t-1.3)*5.2)*smooth(1.3,1.6,t):0;
+  const wave2=t>1.3?Math.sin((t-1.3)*5.2+1.2)*smooth(1.3,1.6,t):0;
+  const restZ=0.22+0.02*breath;
+  const swing=crouch*(t<T0?1:0);
+  const zL=-(restZ+(2.45-restZ)*up)-0.14*wave;
+  const zR=(restZ+(2.45-restZ)*up)+0.14*wave2;
+  armL.sh.rotation.set(0.45*swing*(1-up)+0.2*up,0,zL);
+  armR.sh.rotation.set(0.45*swing*(1-up)+0.2*up,0,zR);
+  armL.el.rotation.set(0,0,-0.15-0.25*up*(0.5+0.5*wave2)-0.1*crouch);
+  armR.el.rotation.set(0,0,0.15+0.25*up*(0.5+0.5*wave)+0.1*crouch);
+
+  // sombra
+  const y=astro.position.y;
+  const sk=1/(1+y*0.32);
+  shadow.scale.set(2.1*sk,0.36*sk,1);
+  shadow.material.opacity=0.62*(0.25+0.75*(1-y/H))*sk+0.0;
+
+  // polvo
+  const dt=t-T0;
+  for(let i=0;i<DUST;i++){
+    const tt=dt-dD[i];
+    if(tt<=0){dustA[i]=0;dustPos[i*3+1]=-10;continue;}
+    let px=dP0[i*3]+dV[i*3]*tt, pz=dP0[i*3+2]+dV[i*3+2]*tt;
+    let py=dP0[i*3+1]+dV[i*3+1]*tt-0.5*GRAV*tt*tt;
+    const gy=-(px*px+pz*pz)/(2*R)+0.02;
+    if(py<gy){ // ya tocó el suelo: se queda donde cayó
+      const tl=(dV[i*3+1]+Math.sqrt(dV[i*3+1]*dV[i*3+1]+2*GRAV*Math.max(0,dP0[i*3+1]-gy)))/GRAV;
+      px=dP0[i*3]+dV[i*3]*tl;pz=dP0[i*3+2]+dV[i*3+2]*tl;py=gy;
+    }
+    dustPos[i*3]=px;dustPos[i*3+1]=py;dustPos[i*3+2]=pz;
+    dustA[i]=0.75*smooth(0,0.05,tt)*(1-smooth(dL[i]*0.4,dL[i],tt));
+  }
+  dustGeo.attributes.position.needsUpdate=true;dustGeo.attributes.aA.needsUpdate=true;
+
+  // fondo
+  starMat.uniforms.uTime.value=t;
+  earthBody.rotation.y=0.6+t*0.22;
+  earthClouds.rotation.y=0.6+t*0.27;
+
+  // headline
+  for(let i=0;i<NCH;i++)chars[i].style.visibility=(t>=charTime(i))?'visible':'hidden';
+  const tk=charTime(keyStart);
+  if(t>=tk){
+    const u=clamp((t-tk)/0.12,0,1);
+    boxEl.style.visibility='visible';
+    boxEl.style.transform=`scale(${(0.85+0.15*easeOutBack(u)).toFixed(4)})`;
+  }else{boxEl.style.visibility='hidden';boxEl.style.transform='scale(0.85)';}
+
+  // render
+  renderer.clear();
+  renderer.render(bgScene,orthoCam);
+  renderer.clearDepth();
+  renderer.render(groundScene,cam);
+  renderer.clearDepth();
+  renderer.render(astroScene,cam);
+};
+
+await document.fonts.ready;
+await Promise.all([
+  document.fonts.load('700 64px Inter'),document.fonts.load('700 40px Inter'),
+  document.fonts.load('italic 500 40px "Cormorant Garamond"')
+]);
+renderer.compile(bgScene,orthoCam);renderer.compile(groundScene,cam);renderer.compile(astroScene,cam);
+window.setTime(0);
+window.sceneReady=true;
+
+if(!new URLSearchParams(location.search).has('capture')){
+  let start=null;
+  const loop=ms=>{if(start===null)start=ms;window.setTime(((ms-start)/1000)%DURATION);requestAnimationFrame(loop);};
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>

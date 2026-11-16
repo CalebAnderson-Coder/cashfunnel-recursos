@@ -6,7 +6,7 @@ Keyword: **MARKETING**
 
 **Marketing Skills for AI Agents** is a free, [MIT-licensed](https://github.com/coreyhaines31/marketingskills/blob/main/LICENSE) collection built by [Corey Haines](https://github.com/coreyhaines31). It works with Claude Code, OpenAI Codex, Cursor, Windsurf, and any agent that supports the [Agent Skills](https://agentskills.io) spec.
 
-- Repo: [github.com/coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) (about 60.6k stars on 16 Nov 2026)
+- Repo: [github.com/coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) (60,783 stars on 16 Nov 2026, GitHub API)
 - Official line: “A collection of AI agent skills focused on marketing tasks.”
 
 This is the **same toolkit** as Brian Anderson’s Spanish page **SKILLS**. If you commented SKILLS on one of his videos, use that page. This one is the English setup for this reel.

@@ -10,7 +10,7 @@ This page is the **morning briefing** setup. If you commented **JARVIS** on a Br
 
 **Sources (checked 16 Nov 2026, America/Caracas):**
 
-- Repo: [github.com/open-jarvis/OpenJarvis](https://github.com/open-jarvis/OpenJarvis) (about 15.8k stars that day)
+- Repo: [github.com/open-jarvis/OpenJarvis](https://github.com/open-jarvis/OpenJarvis) (15,935 stars on 16 Nov 2026, GitHub API)
 - Official installer: [Installation](https://open-jarvis.github.io/OpenJarvis/getting-started/install/)
 - Morning digest: [user-guide/morning-digest](https://open-jarvis.github.io/OpenJarvis/user-guide/morning-digest/)
 - Presets: [Quick Start](https://open-jarvis.github.io/OpenJarvis/getting-started/quickstart/) and the repo README

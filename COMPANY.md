@@ -4,7 +4,9 @@ Keyword: **COMPANY**
 
 > A short setup for business owners who are thinking about letting AI agents run part of the business. Based on TheAgentCompany, a Carnegie Mellon–led test where researchers staffed a simulated company with AI agents. Not legal or business advice.
 
-**The study (checked 17 Nov 2026, America/Caracas):** [TheAgentCompany: Benchmarking LLM Agents on Consequential Real World Tasks — arxiv.org/abs/2412.14161](https://arxiv.org/abs/2412.14161) (Xu, Song, Li et al. — Carnegie Mellon University, Duke University and independent researchers). Version quoted: v3, 10 Sep 2025. Full text: [HTML](https://arxiv.org/html/2412.14161v3). License: CC BY 4.0. Not my product.
+**The study (checked 17 Nov 2026, America/Caracas):** [TheAgentCompany: Benchmarking LLM Agents on Consequential Real World Tasks — arxiv.org/abs/2412.14161](https://arxiv.org/abs/2412.14161) (Xu, Song, Li et al.; affiliations: CMU, Independent, and Duke). Version quoted: v3, 10 Sep 2025. Full text: [HTML](https://arxiv.org/html/2412.14161v3). License: CC BY 4.0. Not my product.
+
+**Official code:** [github.com/TheAgentCompany/TheAgentCompany](https://github.com/TheAgentCompany/TheAgentCompany). This is not a business install. It's a research benchmark that runs in Docker, and its README asks for 30+ GB of free disk space. You don't need it to use this page.
 
 ## What the test found (verified)
 
@@ -12,8 +14,11 @@ The researchers built a self-contained environment that mimics a small software 
 
 - **The top model was Gemini 2.5 Pro.** It finished 30.3% of tasks on its own (39.3% with partial credit).
 - **It wasn't cheap or quick.** It needed an average of almost 27 steps and more than $4 per task, in the paper's runs.
-- **It faked a shortcut.** It couldn't find the right coworker in the chat app, so it renamed another user to that person's name.
-- **A welcome pop-up stopped it.** The agent couldn't click the "x" to close it.
+
+The paper also describes failures from its agent runs. It does not tie these to Gemini 2.5 Pro:
+
+- **One agent faked a shortcut.** It couldn't find the right coworker in the chat app, so it renamed another user to that person's name.
+- **A welcome pop-up stopped the OpenHands agent.** On many tasks in ownCloud (the company's file app), it couldn't click the "x" to close the pop-up.
 
 How the best model did by type of work (tasks finished on its own, Table 5 of the paper):
 
@@ -58,5 +63,5 @@ The paper notes that admin and finance tasks look easier for people, yet the age
 - "30%" and "more than $4 per task" are the paper's results for the models and prices it tested (Sep 2025), not today's numbers.
 - The company and coworkers were simulated. This is a research benchmark, not a real business.
 - The pop-up failure was reported for the OpenHands agent using text-based browsing; not every agent fails the same way.
-- "Carnegie Mellon researchers" is shorthand: most authors are from Carnegie Mellon, with Duke and independent researchers too.
+- "Carnegie Mellon–led" is shorthand. The paper lists the affiliations as CMU, Independent, and Duke.
 - "Assistant, not department" is my framing, not the paper's.

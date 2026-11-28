@@ -14,6 +14,16 @@ Esta guía te cuenta qué enseña cada capítulo, con un ejemplo corto de negoci
 
 El repositorio menciona también una versión en Google Sheets, que Anthropic describe como más amigable. No comprobamos qué pide para funcionar.
 
+## Un prompt para empezar hoy
+
+El reel termina con este prompt. Pégalo en el chat de Claude con la tarea real que tengas entre manos:
+
+```
+Hazme preguntas antes de proponer soluciones.
+```
+
+Es el capítulo 2 en una línea: en vez de adivinar lo que tu negocio necesita, el modelo te pregunta primero. Responde sus preguntas y recién ahí pídele la solución.
+
 ## Nivel principiante
 
 ### Capítulo 1 · Estructura básica de un prompt
@@ -78,6 +88,7 @@ Va más allá del prompt suelto: encadenar varios prompts, darle herramientas al
 ## Enlaces
 
 - Tutorial interactivo de Anthropic: https://github.com/anthropics/prompt-eng-interactive-tutorial
+- Carpeta con los capítulos (cuadernos 00 a 10): https://github.com/anthropics/prompt-eng-interactive-tutorial/tree/master/Anthropic%201P
 - Documentación actual de prompting de Anthropic: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview
 - Buenas prácticas actuales: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
 
